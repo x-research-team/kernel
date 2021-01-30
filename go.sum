@@ -1,0 +1,4 @@
+github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/x-research-team/bus v0.0.0-20210130215805-6bfd63e8c1d8/go.mod h1:ARfh493Ho1GtmVgDQldaKO6/ZMWLZ+/fIQA4qBYe/JI=
+github.com/x-research-team/contract v0.0.0-20210130215307-f57ff7134700/go.mod h1:YL2rizKDbV/0962ebruBFLl71puijKzQqhzXiqRUljY=
+github.com/x-research-team/implant v0.0.0-20210130220427-71f426a30bbd/go.mod h1:BYBr1q7b2WbSaTbcMuTSAJEAecDEhJ+Pi6kq241/LjQ=
