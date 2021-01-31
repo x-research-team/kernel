@@ -1,1 +1,27 @@
-{}
+{
+  "name": "Kernel Mk. I",
+  "version": "1.0.0",
+  "log": {
+    "level": "debug"
+  },
+  "extensions": [
+    {
+      "path": "external",
+      "enabled": true,
+      "types": [
+        "so",
+        "dll",
+        "dynlib"
+      ]
+    },
+    {
+      "path": "plugins",
+      "enabled": true,
+      "types": [
+        "so",
+        "dll",
+        "dynlib"
+      ]
+    }
+  ]
+}
