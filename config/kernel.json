@@ -1,27 +1,17 @@
 {
   "name": "Kernel Mk. I",
   "version": "1.0.0",
-  "log": {
-    "level": "debug"
-  },
   "extensions": [
     {
       "path": "external",
       "enabled": true,
       "types": [
-        "so",
-        "dll",
-        "dynlib"
+        "so"
       ]
     },
     {
       "path": "plugins",
-      "enabled": true,
-      "types": [
-        "so",
-        "dll",
-        "dynlib"
-      ]
+      "enabled": true
     }
   ]
 }

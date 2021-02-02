@@ -3,7 +3,7 @@ package functor
 import (
 	"sync"
 
-	"github.com/x-research-team/kernel/pkg/sys"
+	"github.com/x-research-team/kernel/internal/sys"
 )
 
 func flatten(s []interface{}) (r []interface{}) {

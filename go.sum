@@ -4,11 +4,13 @@ github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzp
 github.com/mattn/go-sqlite3 v1.14.6 h1:dNPt6NO46WmLVt2DLNpwczCmdV5boIZ6g/tlDrlRUbg=
 github.com/mattn/go-sqlite3 v1.14.6/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 github.com/peterh/liner v1.2.1/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
-github.com/x-research-team/bus v0.0.0-20210130215805-6bfd63e8c1d8 h1:xGyCFxxLgkxa9ozkEEAM7O76uAZiLsTMfovFgIIx4eQ=
-github.com/x-research-team/bus v0.0.0-20210130215805-6bfd63e8c1d8/go.mod h1:ARfh493Ho1GtmVgDQldaKO6/ZMWLZ+/fIQA4qBYe/JI=
+github.com/x-research-team/bus v0.0.0-20210202205111-0c3e46242c12 h1:qRDGoWbMjnrNra2GSR04b4ciH6J0PCqRnJflgtgeWbY=
+github.com/x-research-team/bus v0.0.0-20210202205111-0c3e46242c12/go.mod h1:ARfh493Ho1GtmVgDQldaKO6/ZMWLZ+/fIQA4qBYe/JI=
 github.com/x-research-team/contract v0.0.0-20210130215307-f57ff7134700 h1:qDHRi1jMgqwLICFVYR4tMi8Q4f6Tp0H2FwfB9HKqekk=
 github.com/x-research-team/contract v0.0.0-20210130215307-f57ff7134700/go.mod h1:YL2rizKDbV/0962ebruBFLl71puijKzQqhzXiqRUljY=
 github.com/x-research-team/implant v0.0.0-20210130220427-71f426a30bbd h1:u0f1PF352g+aafACd5X0/KwPrrt3AQHPhZ6gDBXnCg0=
 github.com/x-research-team/implant v0.0.0-20210130220427-71f426a30bbd/go.mod h1:BYBr1q7b2WbSaTbcMuTSAJEAecDEhJ+Pi6kq241/LjQ=
+github.com/x-research-team/utils v0.0.0-20210202201616-bd34163d591b h1:qDi0fFfy1Rn5R4piC6tfeWwE1qIBmUmGXlwQhGuFfjo=
+github.com/x-research-team/utils v0.0.0-20210202201616-bd34163d591b/go.mod h1:HtJgQq+gOl0rnG3fnEasLMzY4KlEwH5zN2HEM3OLej4=
 github.com/x-research-team/vm v0.0.0-20210130230415-75503e1fc79a h1:sKy5X0eYiNrKipM9kh6vAVULEf9MVy9WNAIsI50XE9c=
 github.com/x-research-team/vm v0.0.0-20210130230415-75503e1fc79a/go.mod h1:Ngj+XULPD2JMg2iXfSZAt9hTV2j70u6RjME5TrO/oCo=

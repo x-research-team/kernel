@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/x-research-team/kernel/internal/dynamic"
-	"github.com/x-research-team/kernel/pkg/sys"
+	"github.com/x-research-team/kernel/internal/sys"
 )
 
 // Functor Функтор
