@@ -40,10 +40,10 @@ func (functor *Functor) Branch(branch func(*Functor) *Functor) *Functor {
 }
 
 func (functor *Functor) backup() {
-	copy := F(functor.collection...)
-	copy.errors = functor.errors
-	copy.history = functor.history
-	functor.history = append(functor.history, copy)
+	c := F(functor.collection...)
+	c.errors = functor.errors
+	c.history = functor.history
+	functor.history = append(functor.history, c)
 }
 
 func (functor *Functor) Map(mode FunctionMode, lambdas ...dynamic.Lambda) *Functor {
@@ -131,23 +131,23 @@ func (functor *Functor) Pipe(f ...interface{}) (*Functor, error) {
 	return c, nil
 }
 
-func (functor *Functor) Result() *FucntorResult {
+func (functor *Functor) Result() *FunctorResult {
 	branches := make([]interface{}, 0, 0)
 	for _, branch := range functor.branches {
 		branches = append(branches, branch.Result())
 	}
-	return &FucntorResult{
+	return &FunctorResult{
 		Root:     functor.collection,
 		Branches: branches,
 	}
 }
 
-type FucntorResult struct {
+type FunctorResult struct {
 	Root     []interface{}
 	Branches []interface{}
 }
 
-func (r *FucntorResult) ToJson() json.RawMessage {
+func (r *FunctorResult) ToJson() json.RawMessage {
 	buffer, _ := json.Marshal(r)
 	return buffer
 }

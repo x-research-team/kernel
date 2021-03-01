@@ -1,17 +1,4 @@
 {
   "name": "Kernel Mk. I",
-  "version": "1.0.0",
-  "extensions": [
-    {
-      "path": "external",
-      "enabled": true,
-      "types": [
-        "so"
-      ]
-    },
-    {
-      "path": "plugins",
-      "enabled": true
-    }
-  ]
+  "version": "1.0.0"
 }

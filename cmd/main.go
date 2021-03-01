@@ -15,7 +15,7 @@ func init() {
 	sys.Trace(true)
 
 	// Initialize core kernel parts
-	bus.Init(config.Config.Log.Level.ToJson())
+	bus.Init(config.Kernel.Log.Level.ToJson())
 	pipe.Init()
 	vm.Init()
 	implant.Init(

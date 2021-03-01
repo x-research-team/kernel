@@ -28,9 +28,24 @@ var LogLevels = func() *TLogLevelTypes {
 	return v
 }()
 
-var Extensions = func() *TExtensionTypes {
-	v := new(TExtensionTypes)
-	if err := file.Read("config", "extensions.json", v); err != nil {
+var ComponentConfigs = func() TComponentConfigs {
+	v := make(TComponentConfigs, 0)
+	p := make(TComponentPaths, 0)
+	if err := file.Read("config", "components.json", &p); err != nil {
+		panic(err)
+	}
+	types := ComponentTypes
+	for i := range p {
+		v[i].Types = types
+		v[i].Path = p[i]
+		v[i].Enabled = true
+	}
+	return v
+}()
+
+var ComponentTypes = func() TComponentTypes {
+	v := make(TComponentTypes, 0)
+	if err := file.Read("config", "extensions.json", &v); err != nil {
 		panic(err)
 	}
 	return v
@@ -49,27 +64,31 @@ func (log TLogLevel) ToJson() json.RawMessage {
 	return buffer
 }
 
-type TExtensionType string
+type TComponentType string
 
-type TExtensionTypes []TExtensionType
+type TComponentTypes []TComponentType
 
-type TExtensionConfig struct {
-	Path    string          `json:"path"`
+type TComponentPath string
+
+type TComponentPaths []TComponentPath
+
+type TComponentConfig struct {
+	Path    TComponentPath  `json:"path"`
 	Enabled bool            `json:"enabled"`
-	Types   TExtensionTypes `json:"types"`
+	Types   TComponentTypes `json:"types,omitempty"`
 }
 
-type TExtensionConfigs []TExtensionConfig
+type TComponentConfigs []TComponentConfig
 
-type TConfig struct {
+type TKernelConfig struct {
 	Name       string            `json:"name"`
 	Version    string            `json:"version"`
-	Log        *TLogConfig       `json:"log"`
-	Extensions TExtensionConfigs `json:"extensions"`
+	Log        *TLogConfig       `json:"log,omitempty"`
+	Components TComponentConfigs `json:"components,omitempty"`
 }
 
-var Config = func() *TConfig {
-	v := new(TConfig)
+var Kernel = func() *TKernelConfig {
+	v := new(TKernelConfig)
 	if err := file.Read("config", "kernel.json", v); err != nil {
 		panic(err)
 	}
@@ -78,10 +97,8 @@ var Config = func() *TConfig {
 	for _, level := range *LogLevels {
 		v.Log.Level[level] = true
 	}
-	for i := range v.Extensions {
-		if v.Extensions[i].Types == nil {
-			v.Extensions[i].Types = *Extensions
-		}
+	if v.Components == nil {
+		v.Components = ComponentConfigs
 	}
 	return v
 }()

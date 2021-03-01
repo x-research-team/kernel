@@ -29,6 +29,10 @@ func Call(f interface{}, args ...interface{}) []interface{} {
 	fn := reflect.ValueOf(f)
 	in := make([]reflect.Value, len(args))
 	for i := range args {
+		if args[i] == nil {
+			in[i] = reflect.New(reflect.TypeOf(f).In(i))
+			continue
+		}
 		in[i] = reflect.ValueOf(args[i])
 	}
 	out := fn.Call(in)
