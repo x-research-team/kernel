@@ -8,5 +8,5 @@ require (
 	github.com/x-research-team/contract v0.0.0-20210304144252-d1a66fd39340
 	github.com/x-research-team/implant v0.0.0-20210304144437-c28210ad36f3
 	github.com/x-research-team/utils v0.0.0-20210304144840-5488d33f3d0d
-	github.com/x-research-team/vm v0.0.0-20210304143215-31cad1b3039c
+	github.com/x-research-team/vm v0.0.0-20210305090245-1710c9929861
 )

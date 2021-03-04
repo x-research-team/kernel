@@ -1,6 +1,3 @@
 [
-  "external/system",
-  "external/services",
-  "external/security",
-  "external/applications"
+  "kernel/external/system"
 ]

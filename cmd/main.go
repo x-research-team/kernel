@@ -15,14 +15,18 @@ func init() {
 	sys.Trace(true)
 
 	// Initialize core kernel parts
-	bus.Init(config.Kernel.Log.Level.ToJson())
+	logger := config.Kernel.Log.Level.ToJson()
+	bus.Init(logger)
 	pipe.Init()
 	vm.Init()
-	implant.Init(config.Kernel.Components.Paths()...)
+
+	components := config.Kernel.Components.Paths()
+	implant.Init(components...)
 }
 
 func main() {
-	if err := kernel.New(implant.Modules()...).Run(); err != nil {
+	modules := implant.Modules()
+	if err := kernel.New(modules...).Run(); err != nil {
 		bus.Error <- err
 	}
 }
