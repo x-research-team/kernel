@@ -36,9 +36,11 @@ var ComponentConfigs = func() TComponentConfigs {
 	}
 	types := ComponentTypes
 	for i := range p {
-		v[i].Types = types
-		v[i].Path = p[i]
-		v[i].Enabled = true
+		v = append(v, TComponentConfig{
+			Types:   types,
+			Path:    p[i],
+			Enabled: true,
+		})
 	}
 	return v
 }()
@@ -79,6 +81,14 @@ type TComponentConfig struct {
 }
 
 type TComponentConfigs []TComponentConfig
+
+func (c TComponentConfigs) Paths() []string {
+	paths := make([]string, 0)
+	for _, config := range c {
+		paths = append(paths, string(config.Path))
+	}
+	return paths
+}
 
 type TKernelConfig struct {
 	Name       string            `json:"name"`

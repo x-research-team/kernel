@@ -18,12 +18,7 @@ func init() {
 	bus.Init(config.Kernel.Log.Level.ToJson())
 	pipe.Init()
 	vm.Init()
-	implant.Init(
-		"external/system",
-		"external/services",
-		"external/security",
-		"external/applications",
-	)
+	implant.Init(config.Kernel.Components.Paths()...)
 }
 
 func main() {

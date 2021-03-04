@@ -1,5 +1,6 @@
 [
   "external/system",
-  "external/plugins",
-  "external/components"
+  "external/services",
+  "external/security",
+  "external/applications"
 ]

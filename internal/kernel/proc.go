@@ -5,12 +5,13 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/x-research-team/vm"
+
 	"github.com/google/uuid"
 
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
 	"github.com/x-research-team/implant"
-	"github.com/x-research-team/vm/eval"
 )
 
 func init() {
@@ -31,7 +32,7 @@ func New(opts ...contract.KernelModule) contract.IService {
 		o(b)
 	}
 	bus.Info <- "[Kernel] Service initialized"
-	eval.RegisterFunctions("signal", map[string]interface{}{
+	vm.RegisterFunctions("signal", map[string]interface{}{
 		"New":     bus.Signal,
 		"Message": bus.Message,
 	})
@@ -89,8 +90,7 @@ func (kernel *Kernel) run(p contract.IComponent) {
 	if err := p.Run(); err != nil {
 		bus.Error <- err
 	}
-	for true {
-	}
+	select {}
 }
 
 // handle Обработка данных конкретным компонентом ядра
