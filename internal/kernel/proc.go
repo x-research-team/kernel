@@ -5,13 +5,12 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/x-research-team/vm"
-
 	"github.com/google/uuid"
 
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
 	"github.com/x-research-team/implant"
+	"github.com/x-research-team/vm"
 )
 
 func init() {
