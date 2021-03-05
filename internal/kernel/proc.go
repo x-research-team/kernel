@@ -87,6 +87,11 @@ func (kernel *Kernel) run(p contract.IComponent) {
 	if err := p.Configure(); err != nil {
 		bus.Error <- err
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			bus.Error <- fmt.Errorf("(%s) failed to start", p.Name())
+		}
+	}()
 	if err := p.Run(); err != nil {
 		bus.Error <- err
 	}

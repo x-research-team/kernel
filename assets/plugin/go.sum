@@ -1,0 +1,6 @@
+github.com/google/uuid v1.2.0 h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=
+github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/x-research-team/bus v0.0.0-20210304144413-703f6b3f24d5 h1:g6BmHiQKW0rXE1EqAtBr3KHVCtLb6zsfh3vmzzPZE1A=
+github.com/x-research-team/bus v0.0.0-20210304144413-703f6b3f24d5/go.mod h1:VWJoBY8ZHQkpXFjy8cpXuZwmSjOsNUIwetiH9nrlhDs=
+github.com/x-research-team/contract v0.0.0-20210304144252-d1a66fd39340 h1:oEiTgJ160YYTM6SGjAlYYbvgCctSMrmO1dQnHp+Q6ME=
+github.com/x-research-team/contract v0.0.0-20210304144252-d1a66fd39340/go.mod h1:ksn/gGTJ4DesIU/ASAnLibtgSabbBNSqFVrXT4+/+LQ=

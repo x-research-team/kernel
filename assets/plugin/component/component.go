@@ -9,7 +9,6 @@ import (
 	"github.com/x-research-team/contract"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
 )
 
 const (
@@ -23,27 +22,35 @@ func init() {
 
 // Component
 type Component struct {
-	Bus chan []byte
+	bus chan []byte
 
 	components map[string]contract.IComponent
 	trunk      contract.ISignalBus
 	route      string
 	uuid       string
+	fails      []error
 }
 
 // New Создать экземпляр компонента сервиса биллинга
 func New(opts ...contract.ComponentModule) contract.KernelModule {
 	component := &Component{
-		Bus:        make(chan []byte),
+		bus:        make(chan []byte),
 		components: make(map[string]contract.IComponent),
 		route:      route,
 		trunk:      make(contract.ISignalBus),
 	}
-	bus.Add(component.trunk)
-	bus.Info <- fmt.Sprintf("[%v] Initialized", name)
 	for _, o := range opts {
 		o(component)
 	}
+	if len(component.fails) > 0 {
+		for _, err := range component.fails {
+			bus.Error <- fmt.Errorf("[%s] %v", name, err)
+		}
+		return func(service contract.IService) {
+		}
+	}
+	bus.Add(component.trunk)
+	bus.Info <- fmt.Sprintf("[%v] Initialized", name)
 	return func(c contract.IService) {
 		c.AddComponent(component)
 		bus.Info <- fmt.Sprintf("[%v] attached to Billing Service", name)
@@ -81,7 +88,14 @@ func (component *Component) Run() error {
 
 	component.uuid = uuid.New().String()
 
-	select {}
+	for {
+		select {
+		case data := <-component.bus:
+			fmt.Printf("%s\n", data)
+		default:
+			continue
+		}
+	}
 }
 
 func (component *Component) Route() string { return component.route }
