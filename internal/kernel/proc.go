@@ -73,12 +73,12 @@ func (kernel *Kernel) Run() error {
 func (kernel *Kernel) signal(m contract.IMessage) {
 	route := m.Route()
 	bus.Debug <- fmt.Sprintf("%v: %v => %s", route, m.Command(), m.Data())
-	if route != "" {
-		for k := range kernel.components {
-			go kernel.handle(kernel.components[k], m)
-		}
-	} else {
-		bus.Error <- fmt.Errorf("Route %v is not a found", route)
+	if route == "" {
+		bus.Error <- fmt.Errorf("route %v is not a found", route)
+		return
+	}
+	for k := range kernel.components {
+		go kernel.handle(kernel.components[k], m)
 	}
 }
 
