@@ -51,6 +51,7 @@ func (kernel *Kernel) AddPlugin(p, name string) error {
 
 // RemovePlugin Удалить плагин на горячем ходу
 func (kernel *Kernel) RemovePlugin(name string) error {
+	delete(kernel.components, name)
 	return nil
 }
 
