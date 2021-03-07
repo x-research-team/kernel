@@ -72,7 +72,6 @@ func (kernel *Kernel) Run() error {
 
 func (kernel *Kernel) signal(m contract.IMessage) {
 	route := m.Route()
-	bus.Debug <- fmt.Sprintf("%v: %v => %s", route, m.Command(), m.Data())
 	if route == "" {
 		bus.Error <- fmt.Errorf("route %v is not a found", route)
 		return
