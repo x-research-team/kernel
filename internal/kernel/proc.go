@@ -88,7 +88,7 @@ func (kernel *Kernel) run(p contract.IComponent) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			bus.Error <- fmt.Errorf("(%s) failed to start", p.Name())
+			bus.Error <- fmt.Errorf("[%s] failed to start", p.Name())
 		}
 	}()
 	if err := p.Run(); err != nil {
