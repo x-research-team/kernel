@@ -1,0 +1,5 @@
+{
+  "name": "kernel",
+  "dialect": "sqlite3",
+  "database": "data/kernel.db"
+}
