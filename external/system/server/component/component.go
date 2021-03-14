@@ -11,6 +11,7 @@ import (
 	"github.com/x-research-team/contract"
 
 	"github.com/google/uuid"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 const (
@@ -25,6 +26,7 @@ func init() {
 // Component
 type Component struct {
 	bus chan []byte
+	tcp chan []byte
 
 	components map[string]contract.IComponent
 	trunk      contract.ISignalBus
@@ -33,12 +35,14 @@ type Component struct {
 	fails      []error
 
 	engine *gin.Engine
+	socket *socketio.Server
 }
 
 // New Создать экземпляр компонента сервиса биллинга
 func New(opts ...contract.ComponentModule) contract.KernelModule {
 	component := &Component{
 		bus:        make(chan []byte),
+		tcp:        make(chan []byte),
 		components: make(map[string]contract.IComponent),
 		route:      route,
 		trunk:      make(contract.ISignalBus),
@@ -89,9 +93,13 @@ func (component *Component) Configure() error {
 // Run Запуск компонента платежной системы
 func (component *Component) Run() error {
 	bus.Info <- fmt.Sprintf("[%v] component started", name)
-
 	component.uuid = uuid.New().String()
-
+	go func() {
+		if err := component.socket.Serve(); err != nil {
+			bus.Error <- err
+		}
+	}()
+	defer component.socket.Close()
 	return component.engine.Run("0.0.0.0:43001")
 }
 
@@ -103,6 +111,7 @@ func (component *Component) Write(message contract.IMessage) error {
 	}
 	bus.Debug <- fmt.Sprintf("%#v", message)
 	component.bus <- []byte(message.Data())
+	component.tcp <- []byte(message.Data())
 	return nil
 }
 

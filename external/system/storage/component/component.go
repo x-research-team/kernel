@@ -332,7 +332,9 @@ func (component *Component) load(command *TCommand) ([]byte, error) {
 	db := c.Database(command.Service)
 	collection := db.Collection(command.Collection)
 	ctx := context.Background()
-	cursor, err := collection.Find(ctx, command.Filter)
+	query := strings.ReplaceAll(command.Filter.Query, "[", "")
+	query = strings.ReplaceAll(query, "]", "")
+	cursor, err := collection.Find(ctx, bson.M{command.Filter.Field: bson.M{"$in": strings.Split(query, " ")}})
 	if err != nil {
 		return []byte(""), err
 	}
