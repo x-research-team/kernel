@@ -1,5 +1,9 @@
 {
   "name": "signal",
-  "dialect": "sqlite3",
-  "database": "data/signal.db"
+  "dialect": "mongo",
+  "database": "signal",
+  "user": "root",
+  "password": "root",
+  "host": "localhost",
+  "port": 27017
 }

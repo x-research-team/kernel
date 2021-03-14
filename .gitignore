@@ -258,4 +258,5 @@ Temporary Items
 vendor/
 !external/**/*.so
 !bin/kernel.so
+data/
 

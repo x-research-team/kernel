@@ -1,0 +1,27 @@
+version: "3.9"
+    
+services:
+  kernel-database:
+    container_name: kernel-database
+    image: mysql:latest
+    volumes:
+      - ./data/kernel/mysql:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: kernel
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports: 
+      - 3306:3306
+  kernel-journal:
+    container_name: kernel-journal
+    image: mongo:latest
+    volumes:
+      - ./data/kernel/mongo:/data/db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017

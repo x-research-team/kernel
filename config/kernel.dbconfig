@@ -1,5 +1,9 @@
 {
   "name": "kernel",
-  "dialect": "sqlite3",
-  "database": "data/kernel.db"
+  "dialect": "mysql",
+  "database": "kernel",
+  "user": "root",
+  "password": "root",
+  "host": "localhost",
+  "port": 3306
 }

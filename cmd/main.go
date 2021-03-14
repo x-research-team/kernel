@@ -4,6 +4,8 @@ import (
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/bus/pipe"
 	"github.com/x-research-team/implant"
+	"github.com/x-research-team/kernel/external/system/server"
+	"github.com/x-research-team/kernel/external/system/storage"
 	"github.com/x-research-team/kernel/internal/config"
 	"github.com/x-research-team/kernel/internal/kernel"
 	"github.com/x-research-team/kernel/internal/sys"
@@ -26,6 +28,7 @@ func init() {
 
 func main() {
 	modules := implant.Modules()
+	modules = append(modules, storage.Init(), server.Init())
 	if err := kernel.New(modules...).Run(); err != nil {
 		bus.Error <- err
 	}
