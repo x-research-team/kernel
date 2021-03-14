@@ -259,4 +259,5 @@ vendor/
 !external/**/*.so
 !bin/kernel.so
 data/
+__debug_bin
 
