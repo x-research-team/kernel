@@ -94,13 +94,19 @@ func (component *Component) Configure() error {
 func (component *Component) Run() error {
 	bus.Info <- fmt.Sprintf("[%v] component started", name)
 	component.uuid = uuid.New().String()
+	host := "localhost:43001"
+	component.engine.Use(GinMiddleware(fmt.Sprintf("http://%s", host)))
 	go func() {
 		if err := component.socket.Serve(); err != nil {
 			bus.Error <- err
 		}
 	}()
-	defer component.socket.Close()
-	return component.engine.Run("0.0.0.0:43001")
+	defer func () {
+		if err := component.socket.Close(); err != nil {
+			bus.Error <- err
+		}
+	}()
+	return component.engine.Run(host)
 }
 
 func (component *Component) Route() string { return component.route }

@@ -2,6 +2,7 @@ package component
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -27,6 +28,10 @@ func Configure() contract.ComponentModule {
 			fmt.Println("connected:", s.ID())
 			return nil
 		})
+		component.socket.OnEvent("/", "journal.load", func(s socketio.Conn, msg string) string {
+			s.SetContext(msg)
+			return "recv " + msg
+		})
 		component.socket.OnError("/", func(s socketio.Conn, e error) {
 			fmt.Println("meet error:", e)
 		})
@@ -44,7 +49,7 @@ func Configure() contract.ComponentModule {
 				ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 				return
 			}
-			message := bus.Message(m.Route, m.Command, m.Message)
+			message := bus.Message(m.Route, m.Command, string(m.Message))
 			component.trunk <- bus.Signal(message)
 			ctx.JSON(http.StatusOK, gin.H{"id": message.ID()})
 		})
@@ -60,30 +65,45 @@ func Configure() contract.ComponentModule {
 					err := json.Unmarshal(response, &m)
 					switch {
 					case err != nil:
-						ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+						bus.Error <- err
+						ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 						return
 					case len(m) == 0:
+						bus.Error <- errors.New("empty response")
 						ctx.JSON(http.StatusNotFound, m)
 						return
 					case len(m) == 1:
 						if m[0].ID != id[0] {
 							continue
 						}
-						ctx.JSON(http.StatusOK, m[0])
+						data := make(map[string]interface{})
+						if err := json.Unmarshal([]byte(strings.ReplaceAll(m[0].Data, "\\", "")), &data); err != nil {
+							bus.Error <- err
+							ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+							return
+						}
+						ctx.JSON(http.StatusOK, JournalMessageResponse{m[0].ID, data})
 						return
 					case len(m) > 1:
-						n := make([]JournalMessage, 0)
+						n := make([]JournalMessageResponse, 0)
 						for _, i := range m {
 							for _, j := range id {
 								if j != i.ID {
 									continue
 								}
-								n = append(n, i)
+								data := make(map[string]interface{})
+								if err := json.Unmarshal([]byte(strings.ReplaceAll(i.Data, "\\", "")), &data); err != nil {
+									bus.Error <- err
+									ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+									return
+								}
+								n = append(n, JournalMessageResponse{i.ID, data})
 							}
 						}
 						ctx.JSON(http.StatusOK, n)
 						return
 					default:
+						bus.Error <- errors.New("bad request")
 						ctx.JSON(http.StatusBadRequest, nil)
 						return
 					}
@@ -92,11 +112,31 @@ func Configure() contract.ComponentModule {
 				}
 			}
 		})
-		component.engine.GET("/socket/*any", gin.WrapH(component.socket))
-		component.engine.POST("/socket/*any", gin.WrapH(component.socket))
+		handler := gin.WrapH(component.socket)
+		component.engine.GET("/socket/*any", handler)
+		component.engine.POST("/socket/*any", handler)
+		component.engine.Handle("WS", "/socket/*any", handler)
+		component.engine.Handle("WSS", "/socket/*any", handler)
 		c = component
 	}
+}
 
+func GinMiddleware(allowOrigin string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, Content-Length, X-CSRF-Token, Token, session, Origin, Host, Connection, Accept-Encoding, Accept-Language, X-Requested-With")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Request.Header.Del("Origin")
+
+		c.Next()
+	}
 }
 
 type JournalMessage struct {
@@ -104,4 +144,13 @@ type JournalMessage struct {
 	Data string `json:"data"`
 }
 
-type KernelMessage struct{ Route, Command, Message string }
+type JournalMessageResponse struct {
+	ID   string                 `json:"id"`
+	Data map[string]interface{} `json:"data"`
+}
+
+type KernelMessage struct {
+	Route   string          `json:"route"`
+	Command string          `json:"command"`
+	Message json.RawMessage `json:"message"`
+}
