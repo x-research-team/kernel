@@ -72,15 +72,18 @@ func Configure() contract.ComponentModule {
 						ctx.JSON(http.StatusNotFound, Error(errors.New("empty response")))
 						return
 					case len(messages) == 1:
-						if messages[0].ID != ids[0] {
+						m := messages[0]
+						id := ids[0]
+						if id != m.ID {
 							continue
 						}
-						data, err := magic.Jsonify(messages[0].Data)
+						data, err := magic.Jsonify(m.Data)
 						if err != nil {
 							ctx.JSON(http.StatusInternalServerError, Error(err))
 							return
 						}
-						ctx.JSON(http.StatusOK, JournalMessageResponse{messages[0].ID, data})
+						result := JournalMessageResponse{m.ID, data}
+						ctx.JSON(http.StatusOK, result)
 						return
 					case len(messages) > 1:
 						response := make(JournalMessagesResponse, 0)
@@ -94,7 +97,8 @@ func Configure() contract.ComponentModule {
 									ctx.JSON(http.StatusInternalServerError, Error(err))
 									return
 								}
-								response = append(response, JournalMessageResponse{m.ID, data})
+								result := JournalMessageResponse{m.ID, data}
+								response = append(response, result)
 							}
 						}
 						ctx.JSON(http.StatusOK, response)
