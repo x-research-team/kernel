@@ -324,6 +324,8 @@ github.com/x-research-team/implant v0.0.0-20210307110733-f1e9f7a9ba58 h1:T6lMySL
 github.com/x-research-team/implant v0.0.0-20210307110733-f1e9f7a9ba58/go.mod h1:7hX2015HO43vYjbH9PrICiTWSNu7CP/9gYESRUT8ZYQ=
 github.com/x-research-team/utils v0.0.0-20210304144840-5488d33f3d0d h1:+/gWzehBh93cm0tMlKxmfiD0ECD1dbwjr+RDS+BO6Hg=
 github.com/x-research-team/utils v0.0.0-20210304144840-5488d33f3d0d/go.mod h1:hGcZz1FtYBXU5OKS4iPap5PTPB+2xjd/6LFVnE3ewlg=
+github.com/x-research-team/utils v0.0.0-20210315150249-a18056373ac1 h1:JO2YjOwGfO6YeGIT15LOQITe3+UeE50l0EqQorIuaRk=
+github.com/x-research-team/utils v0.0.0-20210315150249-a18056373ac1/go.mod h1:hGcZz1FtYBXU5OKS4iPap5PTPB+2xjd/6LFVnE3ewlg=
 github.com/x-research-team/vm v0.0.0-20210305090245-1710c9929861 h1:URmSnoz5atmnDQq9wzbfdEG1W+5oXXmxMQVdR755Lxg=
 github.com/x-research-team/vm v0.0.0-20210305090245-1710c9929861/go.mod h1:HEvT++JbdZc4gjbOsD+66x5EHZvjIpMKAcfdHR2sjVU=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c h1:u40Z8hqBAAQyv+vATcGgV0YCnDjqSL7/q/JyPhhJSPk=

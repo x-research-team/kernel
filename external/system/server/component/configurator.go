@@ -12,6 +12,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
+	"github.com/x-research-team/utils/magic"
 )
 
 func Configure() contract.ComponentModule {
@@ -76,7 +77,7 @@ func Configure() contract.ComponentModule {
 						if m[0].ID != id[0] {
 							continue
 						}
-						data, err := jsonify(m[0].Data)
+						data, err := magic.Jsonify(m[0].Data)
 						if err != nil {
 							bus.Error <- err
 							ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -91,7 +92,7 @@ func Configure() contract.ComponentModule {
 								if j != i.ID {
 									continue
 								}
-								data, err := jsonify(i.Data)
+								data, err := magic.Jsonify(i.Data)
 								if err != nil {
 									bus.Error <- err
 									ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -137,46 +138,6 @@ func GinMiddleware(allowOrigin string) gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func jsonify(s string) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(s), &result); err != nil {
-		if strings.Contains(err.Error(), "array") {
-			array := make([]map[string]interface{}, 0)
-			if err := json.Unmarshal([]byte(s), &array); err != nil {
-				return nil, err
-			}
-			for i := range array {
-				for k, v := range array[i] {
-					if k == "data" {
-						switch t := v.(type) {
-						case string:
-							array[i][k], err = jsonify(t)
-							return array[i], err
-						default:
-							continue
-						}
-					}
-				}
-			}
-		} else {
-			return nil, err
-		}
-	}
-	for k, v := range result {
-		if k == "data" {
-			switch t := v.(type) {
-			case string:
-				var err error
-				result[k], err = jsonify(t)
-				return result, err
-			default:
-				continue
-			}
-		}
-	}
-	return result, nil
 }
 
 type JournalMessage struct {
