@@ -79,9 +79,10 @@ func Configure() contract.ComponentModule {
 						data, err := jsonify(m[0].Data)
 						if err != nil {
 							bus.Error <- err
+							ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 							return
 						}
-						ctx.JSON(http.StatusOK, JournalMessageResponse{m[0].ID, data})
+						ctx.JSON(http.StatusOK,  JournalMessageResponse{m[0].ID, data})
 						return
 					case len(m) > 1:
 						n := make([]JournalMessageResponse, 0)
@@ -93,6 +94,7 @@ func Configure() contract.ComponentModule {
 								data, err := jsonify(i.Data)
 								if err != nil {
 									bus.Error <- err
+									ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 									return
 								}
 								n = append(n, JournalMessageResponse{i.ID, data})
