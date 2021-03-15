@@ -42,12 +42,12 @@ func Configure() contract.ComponentModule {
 		component.engine.POST("/api", func(ctx *gin.Context) {
 			buffer, err := ioutil.ReadAll(ctx.Request.Body)
 			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err})
+				ctx.JSON(http.StatusInternalServerError, Error(err))
 				return
 			}
 			m := new(KernelMessage)
 			if err = json.Unmarshal(buffer, m); err != nil {
-				ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+				ctx.JSON(http.StatusBadRequest, Error(err))
 				return
 			}
 			message := bus.Message(m.Route, m.Command, string(m.Message))
@@ -55,57 +55,52 @@ func Configure() contract.ComponentModule {
 			ctx.JSON(http.StatusOK, gin.H{"id": message.ID()})
 		})
 		component.engine.GET("/api", func(ctx *gin.Context) {
-			id := strings.Split(ctx.Query("id"), ",")
-			message := bus.Message("storage", "journal", fmt.Sprintf(`{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`, id))
+			ids := strings.Split(ctx.Query("id"), ",")
+			message := bus.Message("storage", "journal", fmt.Sprintf(`{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`, ids))
 			component.trunk <- bus.Signal(message)
 			for {
 				select {
 				case response := <-component.bus:
-					m := make([]JournalMessage, 0)
+					messages := make([]JournalMessage, 0)
 					bus.Info <- fmt.Sprintf("%v", string(response))
-					err := json.Unmarshal(response, &m)
+					err := json.Unmarshal(response, &messages)
 					switch {
 					case err != nil:
-						bus.Error <- err
-						ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+						ctx.JSON(http.StatusInternalServerError, Error(err))
 						return
-					case len(m) == 0:
-						bus.Error <- errors.New("empty response")
-						ctx.JSON(http.StatusNotFound, m)
+					case len(messages) == 0:
+						ctx.JSON(http.StatusNotFound, Error(errors.New("empty response")))
 						return
-					case len(m) == 1:
-						if m[0].ID != id[0] {
+					case len(messages) == 1:
+						if messages[0].ID != ids[0] {
 							continue
 						}
-						data, err := magic.Jsonify(m[0].Data)
+						data, err := magic.Jsonify(messages[0].Data)
 						if err != nil {
-							bus.Error <- err
-							ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+							ctx.JSON(http.StatusInternalServerError, Error(err))
 							return
 						}
-						ctx.JSON(http.StatusOK,  JournalMessageResponse{m[0].ID, data})
+						ctx.JSON(http.StatusOK, JournalMessageResponse{messages[0].ID, data})
 						return
-					case len(m) > 1:
-						n := make([]JournalMessageResponse, 0)
-						for _, i := range m {
-							for _, j := range id {
-								if j != i.ID {
+					case len(messages) > 1:
+						response := make(JournalMessagesResponse, 0)
+						for _, m := range messages {
+							for _, id := range ids {
+								if id != m.ID {
 									continue
 								}
-								data, err := magic.Jsonify(i.Data)
+								data, err := magic.Jsonify(m.Data)
 								if err != nil {
-									bus.Error <- err
-									ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+									ctx.JSON(http.StatusInternalServerError, Error(err))
 									return
 								}
-								n = append(n, JournalMessageResponse{i.ID, data})
+								response = append(response, JournalMessageResponse{m.ID, data})
 							}
 						}
-						ctx.JSON(http.StatusOK, n)
+						ctx.JSON(http.StatusOK, response)
 						return
 					default:
-						bus.Error <- errors.New("bad request")
-						ctx.JSON(http.StatusBadRequest, nil)
+						ctx.JSON(http.StatusBadRequest, Error(errors.New("bad request")))
 						return
 					}
 				default:
@@ -140,15 +135,24 @@ func GinMiddleware(allowOrigin string) gin.HandlerFunc {
 	}
 }
 
+func Error(err error) gin.H {
+	bus.Error <- err
+	return gin.H{"error": err.Error()}
+}
+
 type JournalMessage struct {
 	ID   string `json:"id"`
 	Data string `json:"data"`
 }
 
+type JournalMessages []JournalMessage
+
 type JournalMessageResponse struct {
 	ID   string                 `json:"id"`
 	Data map[string]interface{} `json:"data"`
 }
+
+type JournalMessagesResponse []JournalMessageResponse
 
 type KernelMessage struct {
 	Route   string          `json:"route"`
