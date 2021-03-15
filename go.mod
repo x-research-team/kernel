@@ -15,6 +15,7 @@ require (
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/tidwall/pretty v1.1.0 // indirect
 	github.com/x-research-team/bus v0.0.0-20210307104915-782cf8ba0c40
 	github.com/x-research-team/contract v0.0.0-20210307104512-9f60da0c3706
 	github.com/x-research-team/implant v0.0.0-20210307110733-f1e9f7a9ba58

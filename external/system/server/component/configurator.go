@@ -76,10 +76,9 @@ func Configure() contract.ComponentModule {
 						if m[0].ID != id[0] {
 							continue
 						}
-						data := make(map[string]interface{})
-						if err := json.Unmarshal([]byte(strings.ReplaceAll(m[0].Data, "\\", "")), &data); err != nil {
+						data, err := jsonify(m[0].Data)
+						if err != nil {
 							bus.Error <- err
-							ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 							return
 						}
 						ctx.JSON(http.StatusOK, JournalMessageResponse{m[0].ID, data})
@@ -91,10 +90,9 @@ func Configure() contract.ComponentModule {
 								if j != i.ID {
 									continue
 								}
-								data := make(map[string]interface{})
-								if err := json.Unmarshal([]byte(strings.ReplaceAll(i.Data, "\\", "")), &data); err != nil {
+								data, err := jsonify(i.Data)
+								if err != nil {
 									bus.Error <- err
-									ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 									return
 								}
 								n = append(n, JournalMessageResponse{i.ID, data})
@@ -137,6 +135,46 @@ func GinMiddleware(allowOrigin string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func jsonify(s string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(s), &result); err != nil {
+		if strings.Contains(err.Error(), "array") {
+			array := make([]map[string]interface{}, 0)
+			if err := json.Unmarshal([]byte(s), &array); err != nil {
+				return nil, err
+			}
+			for i := range array {
+				for k, v := range array[i] {
+					if k == "data" {
+						switch t := v.(type) {
+						case string:
+							array[i][k], err = jsonify(t)
+							return array[i], err
+						default:
+							continue
+						}
+					}
+				}
+			}
+		} else {
+			return nil, err
+		}
+	}
+	for k, v := range result {
+		if k == "data" {
+			switch t := v.(type) {
+			case string:
+				var err error
+				result[k], err = jsonify(t)
+				return result, err
+			default:
+				continue
+			}
+		}
+	}
+	return result, nil
 }
 
 type JournalMessage struct {
