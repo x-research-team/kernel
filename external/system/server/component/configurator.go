@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	socketio "github.com/googollee/go-socket.io"
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
 	"github.com/x-research-team/utils/magic"
@@ -18,28 +17,13 @@ import (
 func Configure() contract.ComponentModule {
 	return func(c contract.IComponent) {
 		component := c.(*Component)
-		component.engine = gin.Default()
-		var err error
-		if component.socket, err = socketio.NewServer(nil); err != nil {
-			bus.Error <- err
-			return
-		}
-		component.socket.OnConnect("/", func(s socketio.Conn) error {
-			s.SetContext("")
-			fmt.Println("connected:", s.ID())
-			return nil
+		component.tcpserver = &http.Server{Addr: ":3000", Handler: nil}
+		component.socket = newHub()
+		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+			tcp(component.socket, w, r)
 		})
-		component.socket.OnEvent("/", "journal.load", func(s socketio.Conn, msg string) string {
-			s.SetContext(msg)
-			return "recv " + msg
-		})
-		component.socket.OnError("/", func(s socketio.Conn, e error) {
-			fmt.Println("meet error:", e)
-		})
-		component.socket.OnDisconnect("/", func(s socketio.Conn, msg string) {
-			fmt.Println("closed", msg)
-		})
-		component.engine.POST("/api", func(ctx *gin.Context) {
+		component.httpserver = gin.Default()
+		component.httpserver.POST("/api", func(ctx *gin.Context) {
 			buffer, err := ioutil.ReadAll(ctx.Request.Body)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, Error(err))
@@ -54,7 +38,7 @@ func Configure() contract.ComponentModule {
 			component.trunk <- bus.Signal(message)
 			ctx.JSON(http.StatusOK, gin.H{"id": message.ID()})
 		})
-		component.engine.GET("/api", func(ctx *gin.Context) {
+		component.httpserver.GET("/api", func(ctx *gin.Context) {
 			ids := strings.Split(ctx.Query("id"), ",")
 			message := bus.Message("storage", "journal", fmt.Sprintf(`{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`, ids))
 			component.trunk <- bus.Signal(message)
@@ -62,7 +46,6 @@ func Configure() contract.ComponentModule {
 				select {
 				case response := <-component.bus:
 					messages := make([]JournalMessage, 0)
-					bus.Info <- fmt.Sprintf("%v", string(response))
 					err := json.Unmarshal(response, &messages)
 					switch {
 					case err != nil:
@@ -83,6 +66,7 @@ func Configure() contract.ComponentModule {
 							return
 						}
 						result := JournalMessageResponse{m.ID, data}
+						bus.Debug <- data
 						ctx.JSON(http.StatusOK, result)
 						return
 					case len(messages) > 1:
@@ -101,6 +85,7 @@ func Configure() contract.ComponentModule {
 								response = append(response, result)
 							}
 						}
+						bus.Debug <- response
 						ctx.JSON(http.StatusOK, response)
 						return
 					default:
@@ -112,11 +97,6 @@ func Configure() contract.ComponentModule {
 				}
 			}
 		})
-		handler := gin.WrapH(component.socket)
-		component.engine.GET("/socket/*any", handler)
-		component.engine.POST("/socket/*any", handler)
-		component.engine.Handle("WS", "/socket/*any", handler)
-		component.engine.Handle("WSS", "/socket/*any", handler)
 		c = component
 	}
 }

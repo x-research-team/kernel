@@ -2,6 +2,7 @@ package component
 
 import (
 	"fmt"
+	"net/http"
 	"runtime"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/x-research-team/contract"
 
 	"github.com/google/uuid"
-	socketio "github.com/googollee/go-socket.io"
 )
 
 const (
@@ -34,8 +34,9 @@ type Component struct {
 	uuid       string
 	fails      []error
 
-	engine *gin.Engine
-	socket *socketio.Server
+	httpserver *gin.Engine
+	tcpserver  *http.Server
+	socket     *Hub
 }
 
 // New Создать экземпляр компонента сервиса биллинга
@@ -94,19 +95,9 @@ func (component *Component) Configure() error {
 func (component *Component) Run() error {
 	bus.Info <- fmt.Sprintf("[%v] component started", name)
 	component.uuid = uuid.New().String()
-	host := "localhost:43001"
-	component.engine.Use(GinMiddleware(fmt.Sprintf("http://%s", host)))
-	go func() {
-		if err := component.socket.Serve(); err != nil {
-			bus.Error <- err
-		}
-	}()
-	defer func () {
-		if err := component.socket.Close(); err != nil {
-			bus.Error <- err
-		}
-	}()
-	return component.engine.Run(host)
+	go component.socket.run()
+	go component.tcpserver.ListenAndServe()
+	return component.httpserver.Run(":43001")
 }
 
 func (component *Component) Route() string { return component.route }

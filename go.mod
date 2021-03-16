@@ -11,6 +11,7 @@ require (
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/googollee/go-socket.io v1.4.4
+	github.com/gorilla/websocket v1.4.2
 	github.com/klauspost/compress v1.11.7 // indirect
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.6
