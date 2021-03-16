@@ -107,8 +107,8 @@ func (component *Component) Write(message contract.IMessage) error {
 		return nil
 	}
 	bus.Debug <- fmt.Sprintf("%#v", message)
-	component.bus <- []byte(message.Data())
-	component.tcp <- []byte(message.Data())
+	go func () { component.bus <- []byte(message.Data()) }()
+	go func () { component.tcp <- []byte(message.Data()) }()
 	return nil
 }
 
