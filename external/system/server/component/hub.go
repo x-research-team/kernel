@@ -6,6 +6,7 @@ package component
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/x-research-team/bus"
@@ -79,16 +80,20 @@ func (h *Hub) listen() {
 			err := json.Unmarshal(response, &messages)
 			switch {
 			case err != nil:
-				//ctx.JSON(http.StatusInternalServerError, Error(err))
-				break
+				if err := h.fail(err); err != nil {
+					break
+				}
 			case len(messages) == 0:
-				//ctx.JSON(http.StatusNotFound, Error(errors.New("empty response")))
-				break
+				if err := h.fail(errors.New("empty response")); err != nil {
+					break
+				}
 			case len(messages) == 1:
 				m := messages[0]
 				data, err := magic.Jsonify(m.Data)
 				if err != nil {
-					//ctx.JSON(http.StatusInternalServerError, Error(err))
+					if err := h.fail(err); err != nil {
+						break
+					}
 					break
 				}
 				result := JournalMessageResponse{m.ID, data}
@@ -100,7 +105,9 @@ func (h *Hub) listen() {
 				for _, m := range messages {
 					data, err := magic.Jsonify(m.Data)
 					if err != nil {
-						//ctx.JSON(http.StatusInternalServerError, Error(err))
+						if err := h.fail(err); err != nil {
+							break
+						}
 						break
 					}
 					result := JournalMessageResponse{m.ID, data}
@@ -111,13 +118,27 @@ func (h *Hub) listen() {
 					break
 				}
 			default:
-				//ctx.JSON(http.StatusBadRequest, Error(errors.New("bad request")))
-				break
+				if err := h.fail(errors.New("bad request")); err != nil {
+					break
+				}
 			}
 		default:
 			continue
 		}
 	}
+}
+
+func (h *Hub) fail(e error) error {
+	buffer, err := json.Marshal(Error(e))
+	if err != nil {
+		bus.Error <- err
+		return err
+	}
+	if err := h.send(buffer); err != nil {
+		bus.Error <- err
+		return err
+	}
+	return nil
 }
 
 func (h *Hub) send(v interface{}) error {
