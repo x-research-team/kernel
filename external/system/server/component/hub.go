@@ -77,6 +77,10 @@ func (h *Hub) listen() {
 		select {
 		case response := <-*h.tcp:
 			messages := make([]JournalMessage, 0)
+			if !is.JSON(string(response)) {
+				bus.Info <- string(response)
+				continue
+			}
 			err := json.Unmarshal(response, &messages)
 			switch {
 			case err != nil:
@@ -89,6 +93,9 @@ func (h *Hub) listen() {
 				}
 			case len(messages) == 1:
 				m := messages[0]
+				if m.Data == "" {
+					continue
+				}
 				data, err := magic.Jsonify(m.Data)
 				if err != nil {
 					if err := h.fail(err); err != nil {
@@ -103,6 +110,9 @@ func (h *Hub) listen() {
 			case len(messages) > 1:
 				response := make(JournalMessagesResponse, 0)
 				for _, m := range messages {
+					if m.Data == "" {
+						continue
+					}
 					data, err := magic.Jsonify(m.Data)
 					if err != nil {
 						if err := h.fail(err); err != nil {
@@ -129,12 +139,7 @@ func (h *Hub) listen() {
 }
 
 func (h *Hub) fail(e error) error {
-	buffer, err := json.Marshal(Error(e))
-	if err != nil {
-		bus.Error <- err
-		return err
-	}
-	if err := h.send(buffer); err != nil {
+	if err := h.send(map[string]string{"error": e.Error()}); err != nil {
 		bus.Error <- err
 		return err
 	}

@@ -152,13 +152,12 @@ func (component *Component) Run() error {
 			default:
 				err := fmt.Errorf("unknown command (%v)", m.Command)
 				bus.Error <- err
-				if err := component.signal(m.ID.String(), buffer, nil); err != nil {
+				if err := component.signal(m.ID.String(), []byte(""), err); err != nil {
 					bus.Error <- err
 					continue
 				}
 				continue
 			}
-
 			bus.Info <- string(buffer)
 			if err := component.signal(m.ID.String(), buffer, nil); err != nil {
 				bus.Error <- err
