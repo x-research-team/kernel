@@ -56,42 +56,31 @@ func Configure() contract.ComponentModule {
 						ctx.JSON(http.StatusInternalServerError, Error(err))
 						return
 					case messages.IsEmpty():
-						ctx.JSON(http.StatusNotFound, Error(errors.New("empty response")))
+						ctx.JSON(http.StatusNotFound, Error(errors.New("NOT_FOUND")))
 						return
 					case messages.IsOne():
 						m := messages[0]
-						id := ids[0]
-						if id != m.ID {
-							continue
-						}
-						data, err := magic.Jsonify(m.Data)
+						result, err := m.Response()
 						if err != nil {
 							ctx.JSON(http.StatusInternalServerError, Error(err))
 							return
 						}
-						result := JournalMessageResponse{m.ID, data}
 						ctx.JSON(http.StatusOK, result)
 						return
 					case messages.IsMany():
 						response := make(JournalMessagesResponse, 0)
 						for _, m := range messages {
-							for _, id := range ids {
-								if id != m.ID {
-									continue
-								}
-								data, err := magic.Jsonify(m.Data)
-								if err != nil {
-									ctx.JSON(http.StatusInternalServerError, Error(err))
-									return
-								}
-								result := JournalMessageResponse{m.ID, data}
-								response = append(response, result)
+							result, err := m.Response()
+							if err != nil {
+								ctx.JSON(http.StatusInternalServerError, Error(err))
+								return
 							}
+							response = append(response, result)
 						}
 						ctx.JSON(http.StatusOK, response)
 						return
 					default:
-						ctx.JSON(http.StatusBadRequest, Error(errors.New("bad request")))
+						ctx.JSON(http.StatusBadRequest, Error(errors.New("BAD_REQUEST")))
 						return
 					}
 				default:
@@ -113,6 +102,17 @@ type JournalMessage struct {
 	Data string `json:"data"`
 }
 
+func (m *JournalMessage) Response() (*JournalMessageResponse, error) {
+	if m.Data == "" {
+		return nil, errors.New("no response")
+	}
+	data, err := magic.Jsonify(m.Data)
+	if err != nil {
+		return nil, err
+	}
+	return &JournalMessageResponse{m.ID, data}, nil
+}
+
 type JournalMessages []JournalMessage
 
 func (m JournalMessages) IsEmpty() bool {
@@ -132,7 +132,7 @@ type JournalMessageResponse struct {
 	Data map[string]interface{} `json:"data"`
 }
 
-type JournalMessagesResponse []JournalMessageResponse
+type JournalMessagesResponse []*JournalMessageResponse
 
 type KernelMessage struct {
 	Route   string          `json:"route"`

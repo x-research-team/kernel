@@ -12,7 +12,6 @@ import (
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
 	"github.com/x-research-team/utils/is"
-	"github.com/x-research-team/utils/magic"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -85,50 +84,56 @@ func (h *Hub) listen() {
 			switch {
 			case err != nil:
 				if err := h.fail(err); err != nil {
-					break
-				}
-			case messages.IsEmpty():
-				if err := h.fail(errors.New("empty response")); err != nil {
-					break
-				}
-			case messages.IsOne():
-				m := messages[0]
-				if m.Data == "" {
+					bus.Error <- err
 					continue
 				}
-				data, err := magic.Jsonify(m.Data)
+				bus.Error <- err
+				continue
+			case messages.IsEmpty():
+				if err := h.fail(errors.New("EMPTY_RESPONSE")); err != nil {
+					bus.Error <- err
+					continue
+				}
+				continue
+			case messages.IsOne():
+				m := messages[0]
+				result, err := m.Response()
 				if err != nil {
 					if err := h.fail(err); err != nil {
-						break
+						bus.Error <- err
+						continue
 					}
-					break
+					bus.Error <- err
+					continue
 				}
-				result := JournalMessageResponse{m.ID, data}
 				if err := h.send(result); err != nil {
-					break
+					bus.Error <- err
+					continue
 				}
+				continue
 			case messages.IsMany():
 				response := make(JournalMessagesResponse, 0)
 				for _, m := range messages {
-					if m.Data == "" {
-						continue
-					}
-					data, err := magic.Jsonify(m.Data)
+					result, err := m.Response()
 					if err != nil {
 						if err := h.fail(err); err != nil {
-							break
+							bus.Error <- err
+							continue
 						}
-						break
+						bus.Error <- err
+						continue
 					}
-					result := JournalMessageResponse{m.ID, data}
 					response = append(response, result)
 				}
 				if err := h.send(response); err != nil {
-					break
+					bus.Error <- err
+					continue
 				}
+				continue
 			default:
-				if err := h.fail(errors.New("bad request")); err != nil {
-					break
+				if err := h.fail(errors.New("BAD_REQUEST")); err != nil {
+					bus.Error <- err
+					continue
 				}
 			}
 		default:
@@ -139,7 +144,6 @@ func (h *Hub) listen() {
 
 func (h *Hub) fail(e error) error {
 	if err := h.send(map[string]string{"error": e.Error()}); err != nil {
-		bus.Error <- err
 		return err
 	}
 	return nil
@@ -151,7 +155,6 @@ func (h *Hub) send(v interface{}) error {
 		buffer []byte
 	)
 	if buffer, err = json.Marshal(v); err != nil {
-		bus.Error <- err
 		return err
 	}
 	for client := range h.clients {
