@@ -96,7 +96,12 @@ func (component *Component) Run() error {
 	bus.Info <- fmt.Sprintf("[%v] component started", name)
 	component.uuid = uuid.New().String()
 	go component.socket.run()
-	go component.tcpserver.ListenAndServe()
+	go func () {
+		if err := component.tcpserver.ListenAndServe(); err != nil {
+			bus.Error <- err
+			return
+		}
+	}()
 	return component.httpserver.Run(":43001")
 }
 
@@ -107,8 +112,9 @@ func (component *Component) Write(message contract.IMessage) error {
 		return nil
 	}
 	bus.Debug <- fmt.Sprintf("%#v", message)
-	go func () { component.bus <- []byte(message.Data()) }()
-	go func () { component.tcp <- []byte(message.Data()) }()
+	data := message.Data()
+	go func (m string) { component.bus <- []byte(m) }(data)
+	go func (m string) { component.tcp <- []byte(m) }(data)
 	return nil
 }
 

@@ -76,7 +76,7 @@ func (h *Hub) listen() {
 	for {
 		select {
 		case response := <-*h.tcp:
-			messages := make([]JournalMessage, 0)
+			messages := make(JournalMessages, 0)
 			if !is.JSON(string(response)) {
 				bus.Info <- string(response)
 				continue
@@ -87,11 +87,11 @@ func (h *Hub) listen() {
 				if err := h.fail(err); err != nil {
 					break
 				}
-			case len(messages) == 0:
+			case messages.IsEmpty():
 				if err := h.fail(errors.New("empty response")); err != nil {
 					break
 				}
-			case len(messages) == 1:
+			case messages.IsOne():
 				m := messages[0]
 				if m.Data == "" {
 					continue
@@ -107,7 +107,7 @@ func (h *Hub) listen() {
 				if err := h.send(result); err != nil {
 					break
 				}
-			case len(messages) > 1:
+			case messages.IsMany():
 				response := make(JournalMessagesResponse, 0)
 				for _, m := range messages {
 					if m.Data == "" {
@@ -123,7 +123,6 @@ func (h *Hub) listen() {
 					result := JournalMessageResponse{m.ID, data}
 					response = append(response, result)
 				}
-				bus.Debug <- response
 				if err := h.send(response); err != nil {
 					break
 				}

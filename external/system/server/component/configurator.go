@@ -47,16 +47,16 @@ func Configure() contract.ComponentModule {
 			for {
 				select {
 				case response := <-component.bus:
-					messages := make([]JournalMessage, 0)
+					messages := make(JournalMessages, 0)
 					err := json.Unmarshal(response, &messages)
 					switch {
 					case err != nil:
 						ctx.JSON(http.StatusInternalServerError, Error(err))
 						return
-					case len(messages) == 0:
+					case messages.IsEmpty():
 						ctx.JSON(http.StatusNotFound, Error(errors.New("empty response")))
 						return
-					case len(messages) == 1:
+					case messages.IsOne():
 						m := messages[0]
 						id := ids[0]
 						if id != m.ID {
@@ -68,10 +68,9 @@ func Configure() contract.ComponentModule {
 							return
 						}
 						result := JournalMessageResponse{m.ID, data}
-						bus.Debug <- data
 						ctx.JSON(http.StatusOK, result)
 						return
-					case len(messages) > 1:
+					case messages.IsMany():
 						response := make(JournalMessagesResponse, 0)
 						for _, m := range messages {
 							for _, id := range ids {
@@ -87,7 +86,6 @@ func Configure() contract.ComponentModule {
 								response = append(response, result)
 							}
 						}
-						bus.Debug <- response
 						ctx.JSON(http.StatusOK, response)
 						return
 					default:
@@ -114,6 +112,18 @@ type JournalMessage struct {
 }
 
 type JournalMessages []JournalMessage
+
+func (m JournalMessages) IsEmpty() bool {
+	return len(m) == 0
+}
+
+func (m JournalMessages) IsOne() bool {
+	return len(m) == 1
+}
+
+func (m JournalMessages) IsMany() bool {
+	return len(m) > 1
+}
 
 type JournalMessageResponse struct {
 	ID   string                 `json:"id"`

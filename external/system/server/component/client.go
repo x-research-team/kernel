@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/x-research-team/bus"
 )
 
 const (
@@ -59,8 +60,16 @@ func (c *Client) readPump() {
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		bus.Error <- err
+		return
+	}
+	c.conn.SetPongHandler(func(string) error { 
+		if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			return err
+		}
+		return nil 
+	})
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
@@ -88,32 +97,52 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				bus.Error <- err
+				return
+			}
 			if !ok {
 				// The hub closed the channel.
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
+				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					bus.Error <- err
+					return
+				}
 			}
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				bus.Error <- err
 				return
 			}
-			w.Write(message)
+			if _, err := w.Write(message); err != nil {
+				bus.Error <- err
+				return 
+			}
 
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
+				if _, err := w.Write(newline); err != nil {
+					bus.Error <- err
+					return
+				}
+				if _, err := w.Write(<-c.send); err != nil {
+					bus.Error <- err
+					return
+				}
 			}
 
 			if err := w.Close(); err != nil {
+				bus.Error <- err
 				return
 			}
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				bus.Error <- err
+				return
+			}
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				bus.Error <- err
 				return
 			}
 		}
