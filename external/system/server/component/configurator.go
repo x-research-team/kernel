@@ -14,6 +14,8 @@ import (
 	"github.com/x-research-team/utils/magic"
 )
 
+const JTMP = `{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`
+
 func Configure() contract.ComponentModule {
 	return func(c contract.IComponent) {
 		component := c.(*Component)
@@ -37,12 +39,12 @@ func Configure() contract.ComponentModule {
 			message := bus.Message(m.Route, m.Command, string(m.Message))
 			component.trunk <- bus.Signal(message)
 			ctx.JSON(http.StatusOK, gin.H{"id": message.ID()})
-			response := bus.Message("storage", "journal", fmt.Sprintf(`{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`, message.ID()))
+			response := bus.Message("storage", "journal", fmt.Sprintf(JTMP, message.ID()))
 			component.trunk <- bus.Signal(response)
 		})
 		component.httpserver.GET("/api", func(ctx *gin.Context) {
 			ids := strings.Split(ctx.Query("id"), ",")
-			message := bus.Message("storage", "journal", fmt.Sprintf(`{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`, ids))
+			message := bus.Message("storage", "journal", fmt.Sprintf(JTMP, ids))
 			component.trunk <- bus.Signal(message)
 			for {
 				select {
