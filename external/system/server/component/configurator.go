@@ -38,13 +38,13 @@ func Configure() contract.ComponentModule {
 			message := bus.Message(m.Route, m.Command, string(m.Message))
 			component.trunk <- bus.Signal(message)
 			ctx.JSON(http.StatusOK, gin.H{"id": message.ID()})
-			response := bus.Message("storage", "journal", fmt.Sprintf(JTMP, message.ID()))
-			component.trunk <- bus.Signal(response)
+			response := bus.Message("storage", "journal-store", fmt.Sprintf(JTMP, message.ID()))
+			go func(m contract.IMessage) { component.trunk <- bus.Signal(response) }(response)
 		})
 		component.httpserver.GET("/api", func(ctx *gin.Context) {
 			ids := strings.Split(ctx.Query("id"), ",")
 			message := bus.Message("storage", "journal", fmt.Sprintf(JTMP, ids))
-			component.trunk <- bus.Signal(message)
+			go func(m contract.IMessage) { component.trunk <- bus.Signal(message) }(message)
 			for {
 				select {
 				case response := <-component.bus:

@@ -3,7 +3,6 @@ package component
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,10 +17,6 @@ const (
 	name  = "Server"
 	route = "server"
 )
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 // Component
 type Component struct {
@@ -111,7 +106,6 @@ func (component *Component) Write(message contract.IMessage) error {
 	if message.Route() != component.Route() {
 		return nil
 	}
-	bus.Debug <- fmt.Sprintf("%#v", message)
 	data := message.Data()
 	go func (m string) { component.bus <- []byte(m) }(data)
 	go func (m string) { component.tcp <- []byte(m) }(data)

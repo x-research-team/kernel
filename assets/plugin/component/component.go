@@ -2,7 +2,6 @@ package component
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 
 	"github.com/x-research-team/bus"
@@ -15,10 +14,6 @@ const (
 	name  = "component_name"
 	route = "route_route"
 )
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 // Component
 type Component struct {

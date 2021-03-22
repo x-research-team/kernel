@@ -2,7 +2,6 @@ package kernel
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,10 +11,6 @@ import (
 	"github.com/x-research-team/implant"
 	"github.com/x-research-team/vm"
 )
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 // Kernel Сервис биллинга
 type Kernel struct {

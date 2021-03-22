@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bdwilliams/go-jsonify/jsonify"
@@ -27,10 +27,6 @@ const (
 	name  = "Storage"
 	route = "storage"
 )
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 // Component
 type Component struct {
@@ -111,6 +107,8 @@ func (component *Component) Run() error {
 
 	component.uuid = uuid.New().String()
 
+	var RequestSyncronizer sync.Map
+
 	for {
 		select {
 		case data := <-component.bus:
@@ -129,7 +127,47 @@ func (component *Component) Run() error {
 				result []map[string]interface{}
 				err    error
 			)
+			syncID := "stored" + ":" + m.ID.String()
 			switch m.Command {
+			case "journal-store":
+				go func(m KernelMessage) {
+					command := new(TCommand)
+					if err := json.Unmarshal(m.Data, &command); err != nil {
+						bus.Error <- err
+						return
+					}
+					releasedSyncID := "stored" + ":" + command.Filter.Query
+					fmt.Println("RequestSyncronizer.Load", releasedSyncID, "loaded")
+					if ready, exists := RequestSyncronizer.Load(releasedSyncID); exists {
+						for {
+							switch {
+							case ready:
+								if result, err = component.load(command); err != nil {
+									bus.Error <- err
+									if err := component.signal(m.ID.String(), nil, err); err != nil {
+										bus.Error <- err
+										continue
+									}
+									continue
+								}
+								RequestSyncronizer.Delete(releasedSyncID)
+								fmt.Println("RequestSyncronizer.Delete", releasedSyncID, "deleted")
+								buffer, err := json.Marshal(result)
+								if err != nil {
+									bus.Error <- err
+									return
+								}
+								fmt.Println(string(buffer))
+								component.trunk <- bus.Signal(bus.Message("server", "response", string(buffer)))
+								return
+							default:
+								time.Sleep(time.Microsecond * 500)
+								continue
+							}
+						}
+					}
+				}(*m)
+				continue
 			case "journal":
 				if result, err = component.load(command); err != nil {
 					bus.Error <- err
@@ -139,6 +177,7 @@ func (component *Component) Run() error {
 					}
 					continue
 				}
+				RequestSyncronizer.Delete(syncID)
 				buffer, err := json.Marshal(result)
 				if err != nil {
 					bus.Error <- err
@@ -147,6 +186,8 @@ func (component *Component) Run() error {
 				component.trunk <- bus.Signal(bus.Message("server", "response", string(buffer)))
 				continue
 			case "store":
+				RequestSyncronizer.Store(syncID, false)
+				fmt.Println("RequestSyncronizer.Store", syncID, false)
 				if result, err = component.handle(command); err != nil {
 					bus.Error <- err
 					if err := component.signal(m.ID.String(), nil, err); err != nil {
@@ -164,11 +205,12 @@ func (component *Component) Run() error {
 				}
 				continue
 			}
-			bus.Debug <- result
 			if err := component.signal(m.ID.String(), result, nil); err != nil {
 				bus.Error <- err
 				continue
 			}
+			RequestSyncronizer.Store(syncID, true)
+			fmt.Println("RequestSyncronizer.Store", syncID, true)
 		default:
 			continue
 		}
