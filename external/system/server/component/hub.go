@@ -97,33 +97,21 @@ func (h *Hub) listen() {
 				continue
 			case messages.IsOne():
 				m := messages[0]
-				result, err := m.Response()
-				if err != nil {
-					if err := h.fail(err); err != nil {
-						bus.Error <- err
-						continue
-					}
-					bus.Error <- err
-					continue
-				}
-				if err := h.send(result); err != nil {
+				if err := h.send(&JournalMessageResponse{
+					ID: m.ID,
+					Data: m.Data,
+				}); err != nil {
 					bus.Error <- err
 					continue
 				}
 				continue
 			case messages.IsMany():
 				response := make(JournalMessagesResponse, 0)
-				for _, m := range messages {
-					result, err := m.Response()
-					if err != nil {
-						if err := h.fail(err); err != nil {
-							bus.Error <- err
-							continue
-						}
-						bus.Error <- err
-						continue
-					}
-					response = append(response, result)
+				for _, m := range messages {					
+					response = append(response, &JournalMessageResponse{
+						ID: m.ID,
+						Data: m.Data,
+					})
 				}
 				if err := h.send(response); err != nil {
 					bus.Error <- err

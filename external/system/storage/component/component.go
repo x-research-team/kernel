@@ -20,6 +20,7 @@ import (
 
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
+	"github.com/x-research-team/utils/magic"
 )
 
 const (
@@ -125,25 +126,30 @@ func (component *Component) Run() error {
 				continue
 			}
 			var (
-				buffer []byte
+				result []map[string]interface{}
 				err    error
 			)
 			switch m.Command {
 			case "journal":
-				if buffer, err = component.load(command); err != nil {
+				if result, err = component.load(command); err != nil {
 					bus.Error <- err
-					if err := component.signal(m.ID.String(), []byte(""), err); err != nil {
+					if err := component.signal(m.ID.String(), nil, err); err != nil {
 						bus.Error <- err
 						continue
 					}
 					continue
 				}
-				component.trunk <- bus.Signal(bus.Message("server", "get", string(buffer)))
+				buffer, err := json.Marshal(result)
+				if err != nil {
+					bus.Error <- err
+					continue
+				}
+				component.trunk <- bus.Signal(bus.Message("server", "response", string(buffer)))
 				continue
 			case "store":
-				if buffer, err = component.handle(command); err != nil {
+				if result, err = component.handle(command); err != nil {
 					bus.Error <- err
-					if err := component.signal(m.ID.String(), []byte(""), err); err != nil {
+					if err := component.signal(m.ID.String(), nil, err); err != nil {
 						bus.Error <- err
 						continue
 					}
@@ -152,14 +158,14 @@ func (component *Component) Run() error {
 			default:
 				err := fmt.Errorf("unknown command (%v)", m.Command)
 				bus.Error <- err
-				if err := component.signal(m.ID.String(), []byte(""), err); err != nil {
+				if err := component.signal(m.ID.String(), nil, err); err != nil {
 					bus.Error <- err
 					continue
 				}
 				continue
 			}
-			bus.Info <- string(buffer)
-			if err := component.signal(m.ID.String(), buffer, nil); err != nil {
+			bus.Debug <- result
+			if err := component.signal(m.ID.String(), result, nil); err != nil {
 				bus.Error <- err
 				continue
 			}
@@ -169,21 +175,21 @@ func (component *Component) Run() error {
 	}
 }
 
-func (component *Component) signal(id string, buffer []byte, e error) error {
+func (component *Component) signal(id string, buffer []map[string]interface{}, e error) error {
 	c := component.journal["signal"]
 	if c == nil {
 		return errors.New("connection (signal) not found")
 	}
-	var data string
+	var data interface{}
 	if e != nil {
-		data = fmt.Sprintf(`{"error": "%v"}`, e)
+		data = map[string]interface{}{"error": e.Error()}
 	} else {
-		data = string(buffer)
+		data = buffer
 	}
 	signal := c.Database("signal")
 	messages := signal.Collection("messages")
 	ctx := context.Background()
-	if _, err := messages.InsertOne(ctx, bson.D{{"id", id}, {"data", data}}); err != nil {
+	if _, err := messages.InsertOne(ctx, bson.D{{Key: "id", Value: id}, {Key: "data", Value: data}}); err != nil {
 		return err
 	}
 	return nil
@@ -320,13 +326,13 @@ func (component *Component) Backup(to string) error {
 	return nil
 }
 
-func (component *Component) load(command *TCommand) ([]byte, error) {
+func (component *Component) load(command *TCommand) ([]map[string]interface{}, error) {
 	if command.Service == "" {
-		return []byte(""), fmt.Errorf("unknown service")
+		return nil, fmt.Errorf("unknown service")
 	}
 	c := component.journal[command.Service]
 	if c == nil {
-		return []byte(""), errors.New("connection not found")
+		return nil, errors.New("connection not found")
 	}
 	db := c.Database(command.Service)
 	collection := db.Collection(command.Collection)
@@ -335,70 +341,79 @@ func (component *Component) load(command *TCommand) ([]byte, error) {
 	query = strings.ReplaceAll(query, "]", "")
 	cursor, err := collection.Find(ctx, bson.M{command.Filter.Field: bson.M{"$in": strings.Split(query, " ")}})
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 	results := make([]map[string]interface{}, 0)
 	if err := cursor.All(ctx, &results); err != nil {
-		return []byte(""), err
+		return nil, err
 	}
-	return json.Marshal(results)
+	return results, nil
 }
 
-func (component *Component) handle(command *TCommand) ([]byte, error) {
+func (component *Component) handle(command *TCommand) ([]map[string]interface{}, error) {
 	if command.Service == "" {
-		return []byte(""), fmt.Errorf("unknown service")
+		return nil, fmt.Errorf("unknown service")
 	}
 	if command.SQL == "" {
-		return []byte(""), fmt.Errorf("missing sql raw")
+		return nil, fmt.Errorf("missing sql raw")
 	}
 	c := component.client[command.Service]
 	if c == nil {
-		return []byte(""), errors.New("connection not found")
+		return nil, errors.New("connection not found")
 	}
 	tx, err := c.Begin()
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 	stmt, err := tx.Prepare(command.SQL)
 	if err != nil {
 		if err := tx.Rollback(); err != nil {
-			return []byte(""), err
+			return nil, err
 		}
-		return []byte(""), err
+		return nil, err
 	}
 	if strings.HasPrefix(strings.ToLower(command.SQL), "select") {
 		rows, err := stmt.Query()
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				return []byte(""), err
+				return nil, err
 			}
-			return []byte(""), err
+			return nil, err
 		}
 		defer func(rows *sql.Rows) {
 			if err = rows.Close(); err != nil {
 				bus.Error <- err
 			}
 		}(rows)
-		buffer, err := json.Marshal(jsonify.Jsonify(rows))
-		if err != nil {
-			if err := tx.Rollback(); err != nil {
-				return []byte(""), err
+		returns := make([]map[string]interface{}, 0)
+		results := jsonify.Jsonify(rows)
+		for _, result := range results {
+			if result == "," {
+				continue
 			}
-			return []byte(""), err
+			m, err := magic.Jsonify(result)
+			if err != nil {
+				if err := tx.Rollback(); err != nil {
+					return nil, err
+				}
+				return nil, err
+			}
+			returns = append(returns, m)
 		}
+
 		if err = tx.Commit(); err != nil {
-			return []byte(""), err
+			return nil, err
 		}
-		return buffer, nil
+		return returns, nil
 	}
 	if _, err := stmt.Exec(); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return []byte(""), err
+			return nil, err
 		}
-		return []byte(""), err
+		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
-		return []byte(""), err
+		return nil, err
 	}
-	return []byte(""), nil
+	return nil, nil
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/x-research-team/bus"
 	"github.com/x-research-team/contract"
-	"github.com/x-research-team/utils/magic"
 )
 
 const JTMP = `{"service":"signal","collection":"messages","filter":{"field":"id","query":"%v"}}`
@@ -60,22 +59,18 @@ func Configure() contract.ComponentModule {
 						return
 					case messages.IsOne():
 						m := messages[0]
-						result, err := m.Response()
-						if err != nil {
-							ctx.JSON(http.StatusInternalServerError, Error(err))
-							return
-						}
-						ctx.JSON(http.StatusOK, result)
+						ctx.JSON(http.StatusOK, &JournalMessageResponse{
+							ID:   m.ID,
+							Data: m.Data,
+						})
 						return
 					case messages.IsMany():
 						response := make(JournalMessagesResponse, 0)
 						for _, m := range messages {
-							result, err := m.Response()
-							if err != nil {
-								ctx.JSON(http.StatusInternalServerError, Error(err))
-								return
-							}
-							response = append(response, result)
+							response = append(response, &JournalMessageResponse{
+								ID:   m.ID,
+								Data: m.Data,
+							})
 						}
 						ctx.JSON(http.StatusOK, response)
 						return
@@ -98,19 +93,8 @@ func Error(err error) gin.H {
 }
 
 type JournalMessage struct {
-	ID   string `json:"id"`
-	Data string `json:"data"`
-}
-
-func (m *JournalMessage) Response() (*JournalMessageResponse, error) {
-	if m.Data == "" {
-		return nil, errors.New("no response")
-	}
-	data, err := magic.Jsonify(m.Data)
-	if err != nil {
-		return nil, err
-	}
-	return &JournalMessageResponse{m.ID, data}, nil
+	ID   string          `json:"id"`
+	Data json.RawMessage `json:"data"`
 }
 
 type JournalMessages []JournalMessage
@@ -128,8 +112,8 @@ func (m JournalMessages) IsMany() bool {
 }
 
 type JournalMessageResponse struct {
-	ID   string                 `json:"id"`
-	Data map[string]interface{} `json:"data"`
+	ID   string          `json:"id"`
+	Data json.RawMessage `json:"data"`
 }
 
 type JournalMessagesResponse []*JournalMessageResponse
