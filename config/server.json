@@ -1,0 +1,12 @@
+[
+    {
+        "type": "http",
+        "host": "localhost",
+        "port": 43001
+    },
+    {
+        "type": "ws",
+        "host": "localhost",
+        "port": 3000
+    }
+]

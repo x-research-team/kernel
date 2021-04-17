@@ -7,14 +7,14 @@ import (
 	"github.com/x-research-team/kernel/external/system/server"
 	"github.com/x-research-team/kernel/external/system/storage"
 	"github.com/x-research-team/kernel/internal/config"
+	"github.com/x-research-team/kernel/internal/dynamic"
 	"github.com/x-research-team/kernel/internal/kernel"
-	"github.com/x-research-team/kernel/internal/sys"
 	"github.com/x-research-team/vm"
 )
 
 func init() {
 	// Enable system logging
-	sys.Trace(true)
+	dynamic.Trace(true)
 
 	// Initialize core kernel parts
 	logger := config.Kernel.Log.Level.ToJson()

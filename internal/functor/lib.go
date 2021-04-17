@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/x-research-team/kernel/internal/dynamic"
-	"github.com/x-research-team/kernel/internal/sys"
 )
 
 // Functor Функтор
@@ -90,14 +89,14 @@ func (functor *Functor) Apply(mode FunctionMode, lambdas ...dynamic.Lambda) *Fun
 			go func(wg *sync.WaitGroup, lambda dynamic.Lambda) {
 				defer wg.Done()
 				m.Lock()
-				functor.collection = sys.Call(lambda, functor.collection)
+				functor.collection = dynamic.Call(lambda, functor.collection)
 				m.Unlock()
 			}(&wg, lambda)
 		}
 		wg.Wait()
 	case Sync:
 		for _, lambda := range lambdas {
-			functor.collection = sys.Call(lambda, functor.collection...)
+			functor.collection = dynamic.Call(lambda, functor.collection...)
 		}
 	}
 
@@ -108,7 +107,7 @@ func (functor *Functor) Apply(mode FunctionMode, lambdas ...dynamic.Lambda) *Fun
 func (functor *Functor) Pipe(f ...interface{}) (*Functor, error) {
 	var returns []interface{}
 	for _, o := range f {
-		results := sys.Call(o, functor.collection...)
+		results := dynamic.Call(o, functor.collection...)
 		for i := range results {
 			switch results[i].(type) {
 			case error:

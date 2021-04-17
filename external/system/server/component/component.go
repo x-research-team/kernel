@@ -18,10 +18,16 @@ const (
 	route = "server"
 )
 
+type config struct {
+	Timeout time.Duration `json:"timeout"`
+}
+
 // Component
 type Component struct {
 	bus chan []byte
 	tcp chan []byte
+
+	config *config
 
 	components map[string]contract.IComponent
 	trunk      contract.ISignalBus

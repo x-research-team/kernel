@@ -3,7 +3,7 @@ package functor
 import (
 	"sync"
 
-	"github.com/x-research-team/kernel/internal/sys"
+	"github.com/x-research-team/kernel/internal/dynamic"
 )
 
 func flatten(s []interface{}) (r []interface{}) {
@@ -39,7 +39,7 @@ func mapper(s []interface{}, f interface{}) (r []interface{}) {
 		if i, ok := e.([]interface{}); ok {
 			r = append(r, mapper(i, f)...)
 		} else {
-			r = append(r, sys.Call(f, e)...)
+			r = append(r, dynamic.Call(f, e)...)
 		}
 	}
 	return
@@ -54,7 +54,7 @@ func mapperAsync(s []interface{}, f interface{}) (r []interface{}) {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, e interface{}) {
 				defer wg.Done()
-				r = append(r, sys.Call(f, e)...)
+				r = append(r, dynamic.Call(f, e)...)
 			}(&wg, e)
 		}
 	}
@@ -67,7 +67,7 @@ func filter(s []interface{}, f interface{}) (r []interface{}) {
 		if i, ok := e.([]interface{}); ok {
 			r = append(r, filter(i, f)...)
 		} else {
-			result := sys.Call(f, e)
+			result := dynamic.Call(f, e)
 			if result[0].(bool) {
 				r = append(r, e)
 			}
@@ -85,7 +85,7 @@ func filterAsync(s []interface{}, f interface{}) (r []interface{}) {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, e interface{}) {
 				defer wg.Done()
-				result := sys.Call(f, e)
+				result := dynamic.Call(f, e)
 				if result[0].(bool) {
 					r = append(r, e)
 				}

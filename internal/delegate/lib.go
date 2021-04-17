@@ -1,6 +1,9 @@
 package delegate
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type TItem interface{}
 type TQueue []TItem
@@ -18,7 +21,7 @@ func (s *TQueue) Add(x ...TItem) {
 	}
 }
 
-type TFuncDelegate func(TItem)
+type TFuncDelegate func(TItem) error
 
 func (s *TQueue) Commit(delegates ...TFuncDelegate) {
 	defer s.reset()
@@ -28,7 +31,9 @@ func (s *TQueue) Commit(delegates ...TFuncDelegate) {
 		for _, delegate := range delegates {
 			go func(wg *sync.WaitGroup, delegate TFuncDelegate) {
 				defer wg.Done()
-				delegate(cred)
+				if err := delegate(cred); err != nil {
+					log.Printf("%v\n", err)
+				}
 			}(&wg, delegate)
 		}
 		wg.Wait()

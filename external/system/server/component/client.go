@@ -28,6 +28,10 @@ const (
 	maxMessageSize = 512
 )
 
+func init() {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+}
+
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
@@ -109,7 +113,7 @@ func (c *Client) write() {
 				}
 			}
 
-			w, err := c.conn.NextWriter(websocket.TextMessage)
+			w, err := c.conn.NextWriter(websocket.BinaryMessage)
 			if err != nil {
 				bus.Error <- err
 				return
@@ -151,13 +155,12 @@ func (c *Client) write() {
 
 // serveWs handles websocket requests from the peer.
 func tcp(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		bus.Error <- err
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 1024)}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

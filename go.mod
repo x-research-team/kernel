@@ -5,6 +5,7 @@ go 1.16
 require (
 	entgo.io/ent v0.6.0
 	github.com/Masterminds/squirrel v1.5.0
+	github.com/ahmetb/go-linq v3.0.0+incompatible // indirect
 	github.com/bdwilliams/go-jsonify v0.0.0-20141020182238-48749139e742
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
