@@ -6,7 +6,7 @@ require (
 	entgo.io/ent v0.6.0
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/bdwilliams/go-jsonify v0.0.0-20141020182238-48749139e742
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/go-sql-driver/mysql v1.5.1-0.20200311113236-681ffa848bae
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/uuid v1.2.0
