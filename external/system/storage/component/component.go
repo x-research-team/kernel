@@ -1,3 +1,26 @@
+/*
+ *   Copyright (c) 2021 Adel Urazov
+ *   All rights reserved.
+
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *   of this software and associated documentation files (the "Software"), to deal
+ *   in the Software without restriction, including without limitation the rights
+ *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *   copies of the Software, and to permit persons to whom the Software is
+ *   furnished to do so, subject to the following conditions:
+ 
+ *   The above copyright notice and this permission notice shall be included in all
+ *   copies or substantial portions of the Software.
+ 
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *   SOFTWARE.
+ */
+
 package component
 
 import (
@@ -137,7 +160,6 @@ func (component *Component) Run() error {
 						return
 					}
 					releasedSyncID := "stored" + ":" + command.Filter.Query
-					fmt.Println("RequestSyncronizer.Load", releasedSyncID, "loaded")
 					if ready, exists := RequestSyncronizer.Load(releasedSyncID); exists {
 						for {
 							switch {
@@ -151,13 +173,11 @@ func (component *Component) Run() error {
 									continue
 								}
 								RequestSyncronizer.Delete(releasedSyncID)
-								fmt.Println("RequestSyncronizer.Delete", releasedSyncID, "deleted")
 								buffer, err := json.Marshal(result)
 								if err != nil {
 									bus.Error <- err
 									return
 								}
-								fmt.Println(string(buffer))
 								component.trunk <- bus.Signal(bus.Message("server", "response", string(buffer)))
 								return
 							default:
@@ -187,7 +207,6 @@ func (component *Component) Run() error {
 				continue
 			case "store":
 				RequestSyncronizer.Store(syncID, false)
-				fmt.Println("RequestSyncronizer.Store", syncID, false)
 				if result, err = component.handle(command); err != nil {
 					bus.Error <- err
 					if err := component.signal(m.ID.String(), nil, err); err != nil {
@@ -210,7 +229,6 @@ func (component *Component) Run() error {
 				continue
 			}
 			RequestSyncronizer.Store(syncID, true)
-			fmt.Println("RequestSyncronizer.Store", syncID, true)
 		default:
 			continue
 		}
@@ -230,8 +248,7 @@ func (component *Component) signal(id string, buffer []map[string]interface{}, e
 	}
 	signal := c.Database("signal")
 	messages := signal.Collection("messages")
-	ctx := context.Background()
-	if _, err := messages.InsertOne(ctx, bson.D{{Key: "id", Value: id}, {Key: "data", Value: data}}); err != nil {
+	if _, err := messages.InsertOne(context.Background(), bson.D{{Key: "id", Value: id}, {Key: "data", Value: data}}); err != nil {
 		return err
 	}
 	return nil

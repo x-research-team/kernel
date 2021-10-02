@@ -1,27 +1,43 @@
-version: "3.9"
-    
+version: '3.9'
 services:
   kernel-database:
     container_name: kernel-database
-    image: mysql:latest
+    image: 'mysql:latest'
     volumes:
-      - ./data/kernel/mysql:/var/lib/mysql
+      - './data/kernel/mysql:/var/lib/mysql'
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: kernel
       MYSQL_USER: root
       MYSQL_PASSWORD: root
-    ports: 
-      - 3306:3306
+    ports:
+      - '3306:3306'
   kernel-journal:
     container_name: kernel-journal
-    image: mongo:latest
+    image: 'mongo:latest'
     volumes:
-      - ./data/kernel/mongo:/data/db
+      - './data/kernel/mongo:/data/db'
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - 27017:27017
+      - '27017:27017'
+  kernel-redis:
+    image: redis
+    container_name: kernel-redis
+  kernel-rabbitmq:
+    image: rabbitmq
+    container_name: kernel-rabbitmq
+  kernel-celery:
+    image: celery
+    container_name: kernel-celery
+  kernel-memcached:
+    image: memcached
+    container_name: kernel-memcached
+  kernel-nginx:
+    image: nginx
+    container_name: kernel-nginx
+    ports:
+      - '49001:80'

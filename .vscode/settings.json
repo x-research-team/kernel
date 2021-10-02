@@ -1,21 +1,6 @@
 {
     "go.inferGopath": false,
-    "sqltools.connections": [
-        {
-            "mysqlOptions": {
-                "authProtocol": "default"
-            },
-            "previewLimit": 50,
-            "server": "localhost",
-            "port": 3306,
-            "driver": "MySQL",
-            "name": "Kernel",
-            "group": "Kernel",
-            "database": "kernel",
-            "username": "root",
-            "password": "root",
-            "connectionTimeout": 600
-        }
-    ],
-    "sqltools.useNodeRuntime": true
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#952076"
+    }
 }
