@@ -48,7 +48,7 @@ func configureSocket(component *Component) {
 }
 
 func configureHttp(component *Component) {
-	component.httpserver = gin.Default()
+	component.httpserver = gin.New()
 	component.httpserver.POST("/api", func(ctx *gin.Context) {
 		buffer, err := ioutil.ReadAll(ctx.Request.Body)
 		if err != nil {
