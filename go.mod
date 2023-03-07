@@ -22,8 +22,7 @@ require (
 	github.com/x-research-team/utils v0.0.0-20210315150249-a18056373ac1
 	github.com/x-research-team/vm v0.0.0-20210305090245-1710c9929861
 	go.mongodb.org/mongo-driver v1.5.1
-	golang.org/x/crypto v0.0.0-20210218145215-b8e89b74b9df // indirect
-	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
